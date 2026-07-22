@@ -1,0 +1,26 @@
+# Datasets — not distributed via git (see DATA.md). CSE-CIC-IDS2018 raw CSVs
+# plus all processed/feature arrays, ~11 GB total.
+data/
+
+# Large trained models — regenerate via notebooks (see DATA.md).
+# random_forest.pkl ~2 GB, xgboost.pkl ~117 MB, feat_sel_X_sample.npy ~123 MB.
+# Small scalers, imputers, autoencoders and JSON configs are kept.
+models/random_forest.pkl
+models/xgboost.pkl
+models/feat_sel_X_sample.npy
+
+# Derived prediction / probability arrays — regenerate via evaluation notebooks.
+results/*.npy
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Backups / editor / OS
+*.bak
+*.bak-*
+.DS_Store
+.vscode/
+.idea/

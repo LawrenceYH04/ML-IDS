@@ -1,0 +1,4 @@
+# Web layer only — the ML stack (torch, xgboost, scikit-learn, joblib, pandas,
+# numpy) is already installed for the notebooks and reused as-is.
+fastapi>=0.110
+uvicorn[standard]>=0.29

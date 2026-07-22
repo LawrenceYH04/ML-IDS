@@ -1,0 +1,4 @@
+config,n_features,accuracy,macro_precision,macro_recall,macro_f1,infiltration_f1
+Hand-crafted only (40),40,0.9153,0.7195,0.8666,0.7398,0.1041
+Latent only (16),16,0.9029,0.6934,0.8471,0.7178,0.0932
+Hybrid (56),56,0.9105,0.7208,0.8771,0.7545,0.102

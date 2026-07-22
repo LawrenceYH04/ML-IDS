@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ML-IDS · Live Monitor</title>
+<style>
+  :root{
+    --bg:#0b0f16; --panel:#131a26; --panel2:#0f1621;
+    --line:#20293a; --txt:#e6edf6; --muted:#8b97a9;
+    --green:#2ecc71; --red:#ff4d4f; --amber:#f0a020;
+    --crit:#ff2d55; --high:#ff6b35; --med:#f0a020; --low:#4aa3ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--txt)}
+  header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);
+         background:var(--panel2)}
+  header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  header .dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+  header .src{margin-left:auto;color:var(--muted);font-size:12px}
+  main{padding:18px 20px;max-width:1280px;margin:0 auto}
+
+  /* status banner */
+  .banner{border-radius:14px;padding:20px 24px;margin-bottom:18px;border:1px solid var(--line);
+          display:flex;align-items:center;gap:18px;transition:.25s;background:var(--panel)}
+  .banner.clear{border-color:#1f6f43;background:linear-gradient(90deg,#0f2419,#131a26)}
+  .banner.alert{border-color:var(--red);background:linear-gradient(90deg,#2a0f12,#1a0f16);
+                animation:pulse 1.1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,79,.35)}50%{box-shadow:0 0 0 10px rgba(255,77,79,0)}}
+  .banner .icon{font-size:40px;line-height:1}
+  .banner .big{font-size:26px;font-weight:700;letter-spacing:.3px}
+  .banner .sub{color:var(--muted);font-size:13px;margin-top:3px}
+
+  /* stat cards */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+  .card .v{font-size:26px;font-weight:700;margin-top:6px}
+  .card .v.small{font-size:18px}
+
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .panel h2{font-size:13px;margin:0;padding:12px 16px;border-bottom:1px solid var(--line);
+            color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .panel .body{padding:12px 16px}
+
+  /* attack-by-type bars */
+  .bar{margin:9px 0}
+  .bar .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .bar .row .n{color:var(--muted)}
+  .bar .track{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;background:var(--red);transition:width .4s}
+  .empty{color:var(--muted);font-size:13px;padding:8px 0}
+
+  /* live table */
+  .tablewrap{max-height:560px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{position:sticky;top:0;background:var(--panel2);color:var(--muted);text-align:left;
+           font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody tr.attack{background:rgba(255,77,79,.07)}
+  tbody tr.attack td:first-child{box-shadow:inset 3px 0 0 var(--red)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.NONE{background:#12331f;color:var(--green)}
+  .pill.LOW{background:#12283f;color:var(--low)}
+  .pill.MEDIUM{background:#3a2c10;color:var(--med)}
+  .pill.HIGH{background:#3a1c0f;color:var(--high)}
+  .pill.CRITICAL{background:#3a0f1a;color:var(--crit)}
+  .cls{font-weight:600}
+  .cls.benign{color:var(--green);font-weight:500}
+  .muted{color:var(--muted)}
+  .ok{color:var(--green)} .bad{color:var(--red)}
+  @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="conn"></span>
+  <h1>ML-IDS · Live Network Monitor</h1>
+  <span class="src" id="src">connecting…</span>
+</header>
+
+<main>
+  <div class="banner clear" id="banner">
+    <div class="icon" id="bannerIcon">🛡️</div>
+    <div>
+      <div class="big" id="bannerBig">Monitoring — all clear</div>
+      <div class="sub" id="bannerSub">No attacks detected yet.</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="k">Flows analysed</div><div class="v" id="cFlows">0</div></div>
+    <div class="card"><div class="k">Alerts raised</div><div class="v bad" id="cAlerts">0</div></div>
+    <div class="card"><div class="k">Alert rate</div><div class="v" id="cRate">0.0%</div></div>
+    <div class="card"><div class="k">Last attack</div><div class="v small muted" id="cLast">—</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Attacks by type</h2>
+      <div class="body" id="byType"><div class="empty">No attacks yet.</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Live flows</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Time</th><th>Dst Port</th><th>Proto</th>
+            <th>Prediction</th><th>Conf.</th><th>Severity</th><th>AE</th><th>Ground truth</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const MAXROWS = 120;
+const ATTACK_WINDOW_MS = 8000;
+let lastAttackAt = 0;      // client clock — set when an alert row arrives
+let lastStats = null;      // last stats payload, so the timer can re-render
+
+// escape untrusted CSV-derived text (Timestamp / Label) before innerHTML
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtUptime(s){const m=Math.floor(s/60),ss=s%60;return m?`${m}m ${ss}s`:`${ss}s`;}
+
+function setBanner(stats){
+  if(!stats) return;
+  // recency measured on the CLIENT clock (no server/client skew dependency)
+  const recentAttack = lastAttackAt && (Date.now() - lastAttackAt) < ATTACK_WINDOW_MS;
+  const b=$('banner');
+  if(recentAttack){
+    b.className='banner alert';
+    $('bannerIcon').textContent='🚨';
+    $('bannerBig').textContent='ATTACK DETECTED';
+    const a=stats.last_attack;
+    $('bannerSub').textContent=`${a.class} · severity ${a.severity} · flow #${a.id}`;
+  }else{
+    b.className='banner clear';
+    $('bannerIcon').textContent='🛡️';
+    $('bannerBig').textContent='Monitoring — all clear';
+    $('bannerSub').textContent = stats.total_alerts
+      ? `${stats.total_alerts} alert(s) so far · none in the last few seconds.`
+      : 'No attacks detected yet.';
+  }
+}
+
+function renderStats(stats){
+  lastStats = stats;
+  $('cFlows').textContent = stats.total_flows.toLocaleString();
+  $('cAlerts').textContent = stats.total_alerts.toLocaleString();
+  $('cRate').textContent = (stats.alert_rate*100).toFixed(2)+'%';
+  if(stats.last_attack){
+    $('cLast').textContent = stats.last_attack.class;
+    $('cLast').className='v small';
+  }
+  $('src').textContent = `source: ${stats.source} · uptime ${fmtUptime(stats.uptime_sec)}`;
+
+  // attacks-by-type bars
+  const entries=Object.entries(stats.by_class||{});
+  const box=$('byType');
+  if(!entries.length){ box.innerHTML='<div class="empty">No attacks yet.</div>'; }
+  else{
+    const max=Math.max(...entries.map(e=>e[1]));
+    box.innerHTML=entries.map(([k,v])=>`
+      <div class="bar"><div class="row"><span>${k}</span><span class="n">${v.toLocaleString()}</span></div>
+      <div class="track"><div class="fill" style="width:${(v/max*100).toFixed(1)}%"></div></div></div>`).join('');
+  }
+  setBanner(stats);
+}
+
+function addRows(events, live=true){
+  const tb=$('rows');
+  for(const e of events){
+    const tr=document.createElement('tr');
+    if(e.alert){ tr.className='attack'; if(live) lastAttackAt=Date.now(); }
+    const clsName = e.predicted_class==='Benign' ? 'cls benign':'cls';
+    // Correctness is attack-vs-benign agreement, not exact class-string match:
+    // the lab detector is binary, so "Attack (lab-detected)" vs a specific
+    // ground-truth attack name (e.g. SYN-Flood) is still a CORRECT detection.
+    const predAtk = e.predicted_class!=='Benign';
+    const trueAtk = e.true_label!=null && e.true_label!=='Benign';
+    const truth = e.true_label==null ? '<span class="muted">—</span>'
+      : (predAtk===trueAtk
+          ? `<span class="ok">${esc(e.true_label)} ✓</span>`
+          : `<span class="bad">${esc(e.true_label)} ✗</span>`);
+    // For a lab-detected attack, show the lab detector's attack probability
+    // rather than the 2018 ensemble's (misleading) confidence in "Benign".
+    const conf = (e.lab_attack && e.lab_attack_proba!=null) ? e.lab_attack_proba : e.confidence;
+    const sev = /^(NONE|LOW|MEDIUM|HIGH|CRITICAL)$/.test(e.severity) ? e.severity : 'NONE';
+    tr.innerHTML=`
+      <td class="muted">${e.id}</td>
+      <td class="muted">${esc(e.ts||'').replace(/\s+/,'&nbsp;')||'—'}</td>
+      <td>${e.dst_port??'—'}</td>
+      <td class="muted">${esc(e.protocol)}</td>
+      <td class="${clsName}">${esc(e.predicted_class)}</td>
+      <td>${(conf*100).toFixed(1)}%</td>
+      <td><span class="pill ${sev}">${sev}</span></td>
+      <td>${e.is_anomaly?'⚠︎':'<span class="muted">·</span>'}</td>
+      <td>${truth}</td>`;
+    tb.prepend(tr);
+  }
+  while(tb.children.length>MAXROWS) tb.removeChild(tb.lastChild);
+}
+
+let usingPoll=false, lastPollId=0;
+function startPolling(){
+  if(usingPoll) return; usingPoll=true;
+  $('conn').className='dot on';
+  (async function tick(){
+    try{
+      const d = await (await fetch('api/state',{cache:'no-store'})).json();
+      renderStats(d.stats);
+      const fresh=(d.recent||[]).filter(e=>e.id>lastPollId).sort((a,b)=>a.id-b.id);
+      if(fresh.length){ addRows(fresh); lastPollId=fresh[fresh.length-1].id; }
+    }catch(e){}
+    setTimeout(tick,1000);
+  })();
+}
+function connect(){
+  let opened=false, ws;
+  const proto = location.protocol==='https:'?'wss':'ws';
+  try{ ws = new WebSocket(`${proto}://${location.host}/ws`); }
+  catch(e){ startPolling(); return; }
+  ws.onopen  = ()=>{ opened=true; $('conn').className='dot on'; };
+  ws.onclose = ()=>{ if(usingPoll) return; $('conn').className='dot'; opened?setTimeout(connect,1500):startPolling(); };
+  ws.onerror = ()=>{ if(!opened && !usingPoll) startPolling(); };
+  ws.onmessage = ev=>{
+    const m=JSON.parse(ev.data);
+    if(m.type==='init'){ if(m.recent) addRows(m.recent, false); renderStats(m.stats); }
+    else if(m.type==='batch'){ addRows(m.events); renderStats(m.stats); }
+  };
+  // WebSockets are often stripped by web proxies (OnDemand etc.); if the socket
+  // hasn't opened within 3s, fall back to HTTP polling of /api/state.
+  setTimeout(()=>{ if(!opened) startPolling(); }, 3000);
+}
+connect();
+// re-evaluate the banner every second so it fades red -> green during quiet
+// periods even when no new flows arrive (important in watch mode).
+setInterval(()=>setBanner(lastStats), 1000);
+</script>
+</body>
+</html>

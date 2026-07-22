@@ -1,0 +1,192 @@
+[
+  {
+    "alert_id": "ALERT-00000",
+    "timestamp": "2026-07-14T15:16:24.812882+00:00",
+    "flow_id": 0,
+    "rf_prediction": "DDOS attack-HOIC",
+    "xgb_prediction": "DDOS attack-HOIC",
+    "mlp_prediction": "DDOS attack-HOIC",
+    "rf_confidence": 1.0,
+    "mlp_confidence": 1.0,
+    "ae_recon_error": 0.000652,
+    "ae_anomaly_flag": true,
+    "ae_note": "AE corroborates supervised detection",
+    "severity": "HIGH",
+    "consensus_class": "DDOS attack-HOIC",
+    "shap_explains": "DDOS attack-HOIC",
+    "top_shap_features": [
+      {
+        "feature": "Init Fwd Win Byts",
+        "shap_value": 0.1914
+      },
+      {
+        "feature": "Latent_11",
+        "shap_value": 0.083
+      },
+      {
+        "feature": "Latent_8",
+        "shap_value": 0.0577
+      },
+      {
+        "feature": "Latent_15",
+        "shap_value": 0.0445
+      },
+      {
+        "feature": "Latent_1",
+        "shap_value": 0.0429
+      }
+    ]
+  },
+  {
+    "alert_id": "ALERT-00032",
+    "timestamp": "2026-07-14T15:17:12.368061+00:00",
+    "flow_id": 32,
+    "rf_prediction": "Infilteration",
+    "xgb_prediction": "Infilteration",
+    "mlp_prediction": "Infilteration",
+    "rf_confidence": 0.9997,
+    "mlp_confidence": 0.972,
+    "ae_recon_error": 0.000117,
+    "ae_anomaly_flag": true,
+    "ae_note": "AE corroborates supervised detection",
+    "severity": "CRITICAL",
+    "consensus_class": "Infilteration",
+    "shap_explains": "Infilteration",
+    "top_shap_features": [
+      {
+        "feature": "Latent_12",
+        "shap_value": 0.0636
+      },
+      {
+        "feature": "Fwd Seg Size Min",
+        "shap_value": 0.0571
+      },
+      {
+        "feature": "Latent_5",
+        "shap_value": 0.0454
+      },
+      {
+        "feature": "Init Fwd Win Byts",
+        "shap_value": 0.0428
+      },
+      {
+        "feature": "Flow IAT Max",
+        "shap_value": 0.0375
+      }
+    ]
+  },
+  {
+    "alert_id": "ALERT-01841",
+    "timestamp": "2026-07-14T15:17:59.598076+00:00",
+    "flow_id": 1841,
+    "rf_prediction": "Benign",
+    "xgb_prediction": "Infilteration",
+    "mlp_prediction": "Infilteration",
+    "rf_confidence": 0.1348,
+    "mlp_confidence": 0.9782,
+    "ae_recon_error": 0.000181,
+    "ae_anomaly_flag": true,
+    "ae_note": "AE corroborates supervised detection",
+    "severity": "CRITICAL",
+    "consensus_class": "Infilteration",
+    "shap_explains": "Infilteration",
+    "top_shap_features": [
+      {
+        "feature": "Fwd Seg Size Min",
+        "shap_value": 0.0524
+      },
+      {
+        "feature": "Latent_12",
+        "shap_value": 0.0498
+      },
+      {
+        "feature": "Latent_5",
+        "shap_value": 0.0431
+      },
+      {
+        "feature": "Init Fwd Win Byts",
+        "shap_value": 0.0396
+      },
+      {
+        "feature": "Latent_3",
+        "shap_value": 0.0345
+      }
+    ]
+  },
+  {
+    "alert_id": "ALERT-00027",
+    "timestamp": "2026-07-14T15:18:47.879556+00:00",
+    "flow_id": 27,
+    "rf_prediction": "Benign",
+    "xgb_prediction": "Benign",
+    "mlp_prediction": "SQL Injection",
+    "rf_confidence": 0.9906,
+    "mlp_confidence": 0.4807,
+    "ae_recon_error": 3e-06,
+    "ae_anomaly_flag": false,
+    "ae_note": "AE did not flag anomaly and only one supervised model raised this \u2014 treat as low-confidence / possible false positive",
+    "severity": "LOW",
+    "consensus_class": "SQL Injection",
+    "shap_explains": "SQL Injection",
+    "top_shap_features": [
+      {
+        "feature": "Init Fwd Win Byts",
+        "shap_value": -0.0289
+      },
+      {
+        "feature": "Latent_6",
+        "shap_value": -0.025
+      },
+      {
+        "feature": "Latent_12",
+        "shap_value": -0.0167
+      },
+      {
+        "feature": "Latent_0",
+        "shap_value": -0.0156
+      },
+      {
+        "feature": "Latent_7",
+        "shap_value": -0.0122
+      }
+    ]
+  },
+  {
+    "alert_id": "ALERT-00001",
+    "timestamp": "2026-07-14T15:19:35.770730+00:00",
+    "flow_id": 1,
+    "rf_prediction": "Benign",
+    "xgb_prediction": "Benign",
+    "mlp_prediction": "Benign",
+    "rf_confidence": 0.3821,
+    "mlp_confidence": 0.2511,
+    "ae_recon_error": 1.2e-05,
+    "ae_anomaly_flag": true,
+    "ae_note": "AE flagged an anomaly with no supervised agreement \u2014 possible novel/unknown pattern; review manually",
+    "severity": "LOW",
+    "consensus_class": "Unknown (AE anomaly only)",
+    "shap_explains": "Benign",
+    "top_shap_features": [
+      {
+        "feature": "Pkt Len Max",
+        "shap_value": 0.0213
+      },
+      {
+        "feature": "Flow IAT Std",
+        "shap_value": 0.0197
+      },
+      {
+        "feature": "Fwd Pkts/s",
+        "shap_value": 0.0179
+      },
+      {
+        "feature": "Latent_15",
+        "shap_value": 0.0159
+      },
+      {
+        "feature": "Bwd Pkt Len Max",
+        "shap_value": 0.0159
+      }
+    ]
+  }
+]
