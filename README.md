@@ -28,7 +28,7 @@ notebooks/    data exploration → preprocessing → feature engineering →
 web/          FastAPI + WebSocket live monitoring dashboard
 models/        trained scalers, autoencoders, configs (large .pkl excluded)
 results/       figures, confusion matrices, metric CSVs, SHAP plots
-report_methodology_results_UPDATED.md   methodology & results manuscript
+build/         scripts that regenerate the analysis figures from saved artifacts
 DATA.md        how to obtain the dataset and regenerate excluded artifacts
 ```
 
@@ -39,6 +39,9 @@ GitHub's size limits). See **[DATA.md](DATA.md)** for how to download the
 CSE-CIC-IDS2018 data and regenerate everything by running the notebooks in order.
 
 To run the live dashboard, see **[web/README.md](web/README.md)**.
+
+To re-derive the headline metrics from the saved test-set predictions (nothing is
+retrained, no number is hard-coded), run `python verify_results.py`.
 
 ## Environment
 

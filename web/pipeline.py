@@ -84,6 +84,12 @@ class WebScorer:
 
         true_labels = df['Label'].str.strip().values if 'Label' in df.columns else None
         proto = df['Protocol'].values if 'Protocol' in df.columns else None
+        # Flow-identity columns exist in CICFlowMeter-V4 output (lab/watch) but not
+        # in the released 2018 per-day CSVs (which keep only Dst Port). Extract when
+        # present so the dashboard can show source talkers + a per-flow detail view.
+        src_ip   = df['Src IP'].values   if 'Src IP'   in df.columns else None
+        dst_ip   = df['Dst IP'].values   if 'Dst IP'   in df.columns else None
+        src_port = df['Src Port'].values if 'Src Port' in df.columns else None
 
         X_hybrid, meta_df = self.pipe.preprocess(df)
         preds = self.pipe.predict(X_hybrid, use_rf=False)   # XGB + AE, no RF
@@ -99,9 +105,10 @@ class WebScorer:
         out = self.pipe.build_output(meta_df, preds, true_labels,
                                      lab_attack=lab_pred, lab_proba=lab_pr)
 
-        has_ts   = 'Timestamp' in out.columns
-        has_port = 'Dst Port' in out.columns
-        has_lab  = 'lab_attack' in out.columns
+        has_ts    = 'Timestamp' in out.columns
+        has_port  = 'Dst Port' in out.columns
+        has_lab   = 'lab_attack' in out.columns
+        has_recon = 'recon_mse' in out.columns
         events = []
         for i in range(len(out)):
             self._n += 1
@@ -123,12 +130,16 @@ class WebScorer:
                 'predicted_class': disp_cls,
                 'confidence':    round(float(row['confidence']), 4),
                 'is_anomaly':    is_anom,
+                'recon_mse':     round(float(row['recon_mse']), 6) if has_recon else None,
                 'lab_attack':    lab_atk,
                 'lab_attack_proba': round(float(row['lab_attack_proba']), 4) if has_lab else None,
                 'alert':         bool(row['alert']),
                 'severity':      severity_for(disp_cls, is_anom, lab_atk),
                 'xgb_class':     _clean(row['xgb_class']) if 'xgb_class' in out.columns else cls,
                 'mlp_class':     _clean(row['mlp_class']) if 'mlp_class' in out.columns else '',
+                'src_ip':        str(src_ip[i])   if src_ip   is not None and pd.notna(src_ip[i])   else None,
+                'dst_ip':        str(dst_ip[i])   if dst_ip   is not None and pd.notna(dst_ip[i])   else None,
+                'src_port':      int(src_port[i]) if src_port is not None and pd.notna(src_port[i]) else None,
                 'true_label':    _clean(row['true_label']) if true_labels is not None else None,
             })
         return events

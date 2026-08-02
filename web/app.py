@@ -75,12 +75,21 @@ class Hub:
         self.clients  = set()
         self.recent   = deque(maxlen=200)     # most-recent flow events
         self.by_class = Counter()             # attack class -> count
+        self.by_severity = Counter()          # alert severity -> count
+        self.by_port  = Counter()             # targeted dst port (alerts) -> count
+        self.by_src   = Counter()             # source IP (alerts) -> count (lab/watch only)
         self.total_flows  = 0
         self.total_alerts = 0
         self.last_attack  = None
         self.started_at   = time.time()
         self.source       = SOURCE
         self.running      = False
+        # confusion counts over labelled flows (attack-vs-benign; the lab
+        # detector is binary, so we score detection, not exact class match).
+        self.tp = self.tn = self.fp = self.fn = 0
+        self.labelled = 0
+        self.type_total  = Counter()          # true attack-type -> #flows
+        self.type_caught = Counter()          # true attack-type -> #flagged as attack
 
     # ── stats ────────────────────────────────────────────────────────
     def ingest(self, events):
@@ -91,6 +100,13 @@ class Hub:
                 key = e['predicted_class'] if e['predicted_class'] != 'Benign' \
                     else 'Anomaly (AE)'
                 self.by_class[key] += 1
+                self.by_severity[e['severity']] += 1
+                port = e.get('dst_port')
+                if port is not None:
+                    self.by_port[port] += 1
+                sip = e.get('src_ip')
+                if sip:
+                    self.by_src[sip] += 1
                 self.last_attack = {
                     'class':    key,
                     'severity': e['severity'],
@@ -98,6 +114,20 @@ class Hub:
                     'id':       e['id'],
                     'at':       time.time(),
                 }
+            # running confusion matrix when ground truth is present (replay)
+            tl = e.get('true_label')
+            if tl is not None:
+                self.labelled += 1
+                pred_atk = e['predicted_class'] != 'Benign'
+                true_atk = tl != 'Benign'
+                if   pred_atk and true_atk:      self.tp += 1
+                elif pred_atk and not true_atk:  self.fp += 1
+                elif not pred_atk and true_atk:  self.fn += 1
+                else:                            self.tn += 1
+                if true_atk:                     # per-attack-type recall
+                    self.type_total[tl] += 1
+                    if pred_atk:
+                        self.type_caught[tl] += 1
             self.recent.append(e)
 
     def snapshot(self) -> dict:
@@ -106,6 +136,14 @@ class Hub:
             'total_alerts': self.total_alerts,
             'alert_rate':   (self.total_alerts / self.total_flows) if self.total_flows else 0.0,
             'by_class':     dict(self.by_class.most_common()),
+            'by_severity':  dict(self.by_severity.most_common()),
+            'top_ports':    self.by_port.most_common(6),
+            'top_talkers':  self.by_src.most_common(6),
+            'ae_threshold': getattr(self.scorer.pipe, 'ae_threshold', None) if self.scorer else None,
+            'metrics':      {'tp': self.tp, 'tn': self.tn, 'fp': self.fp,
+                             'fn': self.fn, 'labelled': self.labelled},
+            'per_type_recall': [[t, self.type_caught.get(t, 0), n]
+                                for t, n in self.type_total.most_common()],
             'last_attack':  self.last_attack,
             'uptime_sec':   int(time.time() - self.started_at),
             'source':       self.source,

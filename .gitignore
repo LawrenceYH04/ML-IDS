@@ -12,6 +12,18 @@ models/feat_sel_X_sample.npy
 # Derived prediction / probability arrays — regenerate via evaluation notebooks.
 results/*.npy
 
+# Report / write-up artefacts — submitted separately, not part of the code deliverable.
+*.docx
+report_methodology_results_UPDATED*.md
+SESSION_FINDINGS.md
+report_build/
+build/make_docx.py
+build/make_dashboard_docx.py
+build/make_highlighted_report.py
+
+# Pre-restyle backups of the figures in results/ (superseded).
+results/legacy_style/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -6,80 +6,187 @@
 <title>ML-IDS · Live Monitor</title>
 <style>
   :root{
-    --bg:#0b0f16; --panel:#131a26; --panel2:#0f1621;
-    --line:#20293a; --txt:#e6edf6; --muted:#8b97a9;
-    --green:#2ecc71; --red:#ff4d4f; --amber:#f0a020;
-    --crit:#ff2d55; --high:#ff6b35; --med:#f0a020; --low:#4aa3ff;
+    --bg:#0b0f16; --panel:#131a26; --panel2:#0f1621; --panel3:#0c121c;
+    --line:#20293a; --txt:#e6edf6; --muted:#8b97a9; --muted2:#5f6b7e;
+    --green:#2ecc71; --red:#ff5c5c; --amber:#f0a020; --blue:#3d8bfd;
+    --crit:#ff3860; --high:#ff7a3d; --med:#f2b01e; --low:#4aa3ff;
+    --tabnum:tabular-nums;
   }
   *{box-sizing:border-box}
-  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-       background:var(--bg);color:var(--txt)}
-  header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);
-         background:var(--panel2)}
-  header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
-  header .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
-  header .dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
-  header .src{margin-left:auto;color:var(--muted);font-size:12px}
-  main{padding:18px 20px;max-width:1280px;margin:0 auto}
+  html,body{overflow-x:hidden}
+  body{margin:0;font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:radial-gradient(1200px 600px at 80% -10%,#101a2b 0%,var(--bg) 55%) fixed;color:var(--txt)}
+
+  header{display:flex;align-items:center;gap:12px;padding:13px 22px;border-bottom:1px solid var(--line);
+         background:rgba(12,18,28,.85);backdrop-filter:blur(6px);position:sticky;top:0;z-index:20}
+  header .brand{display:flex;align-items:center;gap:10px}
+  header .logo{font-size:19px;filter:drop-shadow(0 0 6px rgba(61,139,253,.5))}
+  header h1{font-size:15px;margin:0;font-weight:650;letter-spacing:.2px}
+  header .badge{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;
+                padding:3px 9px;background:var(--panel2);white-space:nowrap}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--muted2);transition:.3s}
+  header .dot.on{background:var(--green);box-shadow:0 0 9px var(--green)}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px}
+  header .right .src{font-variant-numeric:var(--tabnum)}
+
+  main{padding:18px 22px 40px;max-width:1360px;margin:0 auto}
 
   /* status banner */
-  .banner{border-radius:14px;padding:20px 24px;margin-bottom:18px;border:1px solid var(--line);
+  .banner{border-radius:16px;padding:18px 22px;margin-bottom:16px;border:1px solid var(--line);
           display:flex;align-items:center;gap:18px;transition:.25s;background:var(--panel)}
-  .banner.clear{border-color:#1f6f43;background:linear-gradient(90deg,#0f2419,#131a26)}
-  .banner.alert{border-color:var(--red);background:linear-gradient(90deg,#2a0f12,#1a0f16);
+  .banner.clear{border-color:#1f6f43;background:linear-gradient(90deg,#0f2419,#131a26 60%)}
+  .banner.alert{border-color:var(--red);background:linear-gradient(90deg,#2a0f12,#1a0f16 60%);
                 animation:pulse 1.1s ease-in-out infinite}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,79,.35)}50%{box-shadow:0 0 0 10px rgba(255,77,79,0)}}
-  .banner .icon{font-size:40px;line-height:1}
-  .banner .big{font-size:26px;font-weight:700;letter-spacing:.3px}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,92,92,.35)}50%{box-shadow:0 0 0 12px rgba(255,92,92,0)}}
+  .banner .icon{font-size:38px;line-height:1}
+  .banner .big{font-size:24px;font-weight:750;letter-spacing:.3px}
   .banner .sub{color:var(--muted);font-size:13px;margin-top:3px}
 
-  /* stat cards */
-  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-  .card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
-  .card .v{font-size:26px;font-weight:700;margin-top:6px}
-  .card .v.small{font-size:18px}
+  /* KPI tiles */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue);opacity:.55}
+  .kpi.bad::before{background:var(--red)} .kpi.good::before{background:var(--green)}
+  .kpi .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.7px}
+  .kpi .v{font-size:25px;font-weight:750;margin-top:6px;font-variant-numeric:var(--tabnum)}
+  .kpi .v.small{font-size:17px}
+  .kpi .foot{color:var(--muted2);font-size:11px;margin-top:3px}
 
-  .grid{display:grid;grid-template-columns:340px 1fr;gap:16px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .panel h2{font-size:13px;margin:0;padding:12px 16px;border-bottom:1px solid var(--line);
-            color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
-  .panel .body{padding:12px 16px}
+  /* generic panel */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .panel h2{font-size:12px;margin:0;padding:12px 16px;border-bottom:1px solid var(--line);
+            color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:650;
+            display:flex;align-items:center;gap:8px}
+  .panel h2 .tag{margin-left:auto;font-size:11px;color:var(--muted2);letter-spacing:.3px;text-transform:none}
+  .panel .body{padding:14px 16px}
 
-  /* attack-by-type bars */
-  .bar{margin:9px 0}
-  .bar .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-  .bar .row .n{color:var(--muted)}
-  .bar .track{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden}
-  .bar .fill{height:100%;border-radius:6px;background:var(--red);transition:width .4s}
-  .empty{color:var(--muted);font-size:13px;padding:8px 0}
+  .row1{display:grid;grid-template-columns:1.7fr 1fr;gap:14px;margin-bottom:14px}
+  .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:14px}
+  @media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.row1{grid-template-columns:1fr}}
 
-  /* live table */
-  .tablewrap{max-height:560px;overflow:auto}
+  /* timeline */
+  .tl-wrap{position:relative}
+  .tl-wrap svg{display:block;width:100%;height:auto}
+  .tl-legend{display:flex;gap:16px;padding:0 16px 12px;font-size:12px;color:var(--muted)}
+  .tl-legend .it{display:flex;align-items:center;gap:6px}
+  .tl-legend .sw{width:12px;height:3px;border-radius:2px}
+  .tl-tip{position:absolute;pointer-events:none;background:#0b1220;border:1px solid var(--line);
+          border-radius:8px;padding:7px 10px;font-size:11.5px;line-height:1.5;opacity:0;transition:opacity .1s;
+          box-shadow:0 6px 18px rgba(0,0,0,.4);white-space:nowrap;font-variant-numeric:var(--tabnum);z-index:5}
+  .tl-tip b{font-weight:700}
+
+  /* detection quality */
+  .mq{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mq .m{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+  .mq .m .k{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px}
+  .mq .m .v{font-size:22px;font-weight:750;margin-top:3px;font-variant-numeric:var(--tabnum)}
+  .cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:1px;margin-top:12px;background:var(--line);
+      border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:11px}
+  .cm div{background:var(--panel);padding:7px 8px;text-align:center;font-variant-numeric:var(--tabnum)}
+  .cm .h{background:var(--panel2);color:var(--muted);font-weight:600}
+  .cm .rl{background:var(--panel2);color:var(--muted);font-weight:600;writing-mode:horizontal-tb}
+  .cm .tp{color:var(--green)} .cm .tn{color:var(--muted)} .cm .fp,.cm .fn{color:var(--red)}
+  .metric-empty{color:var(--muted);font-size:12.5px;line-height:1.6;padding:6px 0}
+
+  /* bars (attacks by type + ports) */
+  .bar{margin:10px 0}
+  .bar .lab{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;gap:8px}
+  .bar .lab .n{color:var(--muted);font-variant-numeric:var(--tabnum);flex:none}
+  .bar .lab .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .track{height:9px;background:var(--panel2);border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--high),var(--red));transition:width .4s}
+  .bar.port .fill{background:linear-gradient(90deg,#2b6fd6,var(--blue))}
+  .bar .svc{color:var(--muted2);font-weight:400}
+  .bar .lown{color:var(--amber);font-size:10px;border:1px solid var(--amber);border-radius:4px;padding:0 4px;opacity:.85;vertical-align:1px}
+  .empty{color:var(--muted);font-size:13px;padding:10px 0}
+
+  /* severity donut */
+  .donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .donut{position:relative;flex:none}
+  .donut .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .donut .ctr .num{font-size:22px;font-weight:750;font-variant-numeric:var(--tabnum)}
+  .donut .ctr .cap{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .sev-legend{flex:1;min-width:130px;display:flex;flex-direction:column;gap:7px}
+  .sev-legend .it{display:flex;align-items:center;gap:8px;font-size:12.5px}
+  .sev-legend .sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .sev-legend .nm{flex:1}
+  .sev-legend .ct{color:var(--muted);font-variant-numeric:var(--tabnum)}
+  .sev-legend .pc{color:var(--muted2);width:42px;text-align:right;font-variant-numeric:var(--tabnum)}
+
+  /* table */
+  .tbar{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .tbar .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .tbar .seg button{background:transparent;border:0;color:var(--muted);font-size:12px;padding:5px 11px;cursor:pointer}
+  .tbar .seg button.on{background:var(--blue);color:#04101f;font-weight:650}
+  .tbar .btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);font-size:12px;
+             padding:5px 11px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .tbar .btn:hover{border-color:var(--muted2)}
+  .tbar .btn.paused{color:var(--amber);border-color:var(--amber)}
+  .tbar .grow{margin-left:auto;color:var(--muted2);font-size:11.5px}
+  .tablewrap{max-height:520px;overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   thead th{position:sticky;top:0;background:var(--panel2);color:var(--muted);text-align:left;
-           font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-  tbody td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-  tbody tr.attack{background:rgba(255,77,79,.07)}
+           font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+  tbody td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:var(--tabnum)}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:rgba(61,139,253,.10)}
+  tbody tr.attack{background:rgba(255,92,92,.07)}
+  tbody tr.attack:hover{background:rgba(255,92,92,.14)}
   tbody tr.attack td:first-child{box-shadow:inset 3px 0 0 var(--red)}
-  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+  table.hide-benign tbody tr.benign-row{display:none}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:650}
   .pill.NONE{background:#12331f;color:var(--green)}
   .pill.LOW{background:#12283f;color:var(--low)}
   .pill.MEDIUM{background:#3a2c10;color:var(--med)}
   .pill.HIGH{background:#3a1c0f;color:var(--high)}
   .pill.CRITICAL{background:#3a0f1a;color:var(--crit)}
-  .cls{font-weight:600}
+  .cls{font-weight:650}
   .cls.benign{color:var(--green);font-weight:500}
-  .muted{color:var(--muted)}
-  .ok{color:var(--green)} .bad{color:var(--red)}
-  @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+  .muted{color:var(--muted)} .ok{color:var(--green)} .bad{color:var(--red)}
+
+  /* per-flow detail drawer */
+  .backdrop{position:fixed;inset:0;background:rgba(4,8,14,.55);opacity:0;pointer-events:none;
+            transition:opacity .2s;z-index:30}
+  .backdrop.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:400px;max-width:92vw;background:var(--panel);
+          border-left:1px solid var(--line);box-shadow:-14px 0 40px rgba(0,0,0,.5);
+          transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);z-index:31;
+          display:flex;flex-direction:column}
+  .drawer.open{transform:translateX(0)}
+  .drawer .dh{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .drawer .dh .t{font-size:15px;font-weight:700;font-variant-numeric:var(--tabnum)}
+  .drawer .dh .x{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--muted);
+                 width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1}
+  .drawer .dh .x:hover{color:var(--txt);border-color:var(--muted2)}
+  .drawer .db{padding:16px 18px;overflow:auto;display:flex;flex-direction:column;gap:16px}
+  .dsec .st{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:9px;font-weight:650}
+  .verdict{border:1px solid var(--line);border-radius:12px;padding:13px 14px;background:var(--panel2)}
+  .verdict.attack{border-color:var(--red);background:linear-gradient(180deg,#1f0d10,#131a26)}
+  .verdict .vc{font-size:18px;font-weight:750}
+  .verdict .vm{color:var(--muted);font-size:12px;margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .vote{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .vote:last-child{border-bottom:0}
+  .vote .m{width:96px;flex:none;color:var(--muted);font-size:12px}
+  .vote .val{font-weight:650;font-size:13px}
+  .vote .bdg{font-size:11px;font-weight:650;padding:2px 8px;border-radius:999px}
+  .bdg.atk{background:#3a1216;color:var(--red)} .bdg.ben{background:#12331f;color:var(--green)}
+  .bdg.na{background:var(--panel);color:var(--muted2);border:1px solid var(--line)}
+  .aebar{flex:1;min-width:60px}
+  .aebar .tk{height:7px;background:var(--panel);border:1px solid var(--line);border-radius:5px;position:relative;overflow:hidden}
+  .aebar .fl{height:100%;background:var(--blue)}
+  .aebar .thr{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--amber)}
+  .aebar .cap{font-size:10.5px;color:var(--muted2);margin-top:4px;font-variant-numeric:var(--tabnum)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12.5px}
+  .kv .k{color:var(--muted)} .kv .v{text-align:right;font-variant-numeric:var(--tabnum);word-break:break-all}
+  @media(max-width:520px){.drawer{width:100%}}
 </style>
 </head>
 <body>
 <header>
   <span class="dot" id="conn"></span>
-  <h1>ML-IDS · Live Network Monitor</h1>
-  <span class="src" id="src">connecting…</span>
+  <div class="brand"><span class="logo">🛡️</span><h1>ML-IDS · Live Network Monitor</h1></div>
+  <span class="badge">XGBoost + Autoencoder ensemble</span>
+  <div class="right"><span class="src" id="src">connecting…</span></div>
 </header>
 
 <main>
@@ -91,53 +198,118 @@
     </div>
   </div>
 
-  <div class="cards">
-    <div class="card"><div class="k">Flows analysed</div><div class="v" id="cFlows">0</div></div>
-    <div class="card"><div class="k">Alerts raised</div><div class="v bad" id="cAlerts">0</div></div>
-    <div class="card"><div class="k">Alert rate</div><div class="v" id="cRate">0.0%</div></div>
-    <div class="card"><div class="k">Last attack</div><div class="v small muted" id="cLast">—</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="k">Flows analysed</div><div class="v" id="cFlows">0</div><div class="foot">cumulative</div></div>
+    <div class="kpi bad"><div class="k">Alerts raised</div><div class="v" id="cAlerts">0</div><div class="foot" id="cAlertsFoot">non-benign or AE anomaly</div></div>
+    <div class="kpi"><div class="k">Alert rate</div><div class="v" id="cRate">0.0%</div><div class="foot">of all flows</div></div>
+    <div class="kpi"><div class="k">Throughput</div><div class="v" id="cRateFps">0<span style="font-size:14px;font-weight:500;color:var(--muted)"> fl/s</span></div><div class="foot">live, ~5s avg</div></div>
+    <div class="kpi"><div class="k">Last attack</div><div class="v small muted" id="cLast">—</div><div class="foot" id="cLastFoot">none yet</div></div>
   </div>
 
-  <div class="grid">
+  <div class="row1">
+    <div class="panel">
+      <h2>Live throughput<span class="tag" id="tlTag">flows / sec</span></h2>
+      <div class="tl-wrap" id="tlWrap">
+        <svg id="tl" viewBox="0 0 600 170" preserveAspectRatio="none" role="img" aria-label="throughput timeline"></svg>
+        <div class="tl-tip" id="tlTip"></div>
+      </div>
+      <div class="tl-legend">
+        <span class="it"><span class="sw" style="background:var(--blue)"></span>Flows / sec</span>
+        <span class="it"><span class="sw" style="background:var(--red)"></span>Alerts / sec</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Detection quality<span class="tag" id="dqTag">vs. ground truth</span></h2>
+      <div class="body" id="dq"></div>
+    </div>
+  </div>
+
+  <div class="row2">
     <div class="panel">
       <h2>Attacks by type</h2>
       <div class="body" id="byType"><div class="empty">No attacks yet.</div></div>
     </div>
-
     <div class="panel">
-      <h2>Live flows</h2>
-      <div class="tablewrap">
-        <table>
-          <thead><tr>
-            <th>#</th><th>Time</th><th>Dst Port</th><th>Proto</th>
-            <th>Prediction</th><th>Conf.</th><th>Severity</th><th>AE</th><th>Ground truth</th>
-          </tr></thead>
-          <tbody id="rows"></tbody>
-        </table>
+      <h2>Severity mix<span class="tag">alerts</span></h2>
+      <div class="body" id="sevBox"><div class="empty">No alerts yet.</div></div>
+    </div>
+    <div class="panel">
+      <h2>Top targeted ports<span class="tag">alerts</span></h2>
+      <div class="body" id="portBox"><div class="empty">No targeted ports yet.</div></div>
+    </div>
+    <div class="panel">
+      <h2>Top talkers<span class="tag">source IPs</span></h2>
+      <div class="body" id="talkerBox"><div class="empty">No source IPs yet.</div></div>
+    </div>
+    <div class="panel">
+      <h2>Recall by attack type<span class="tag">caught / total</span></h2>
+      <div class="body" id="typeRecallBox"><div class="empty">Ground truth needed (replay mode).</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Live flows</h2>
+    <div class="tbar">
+      <div class="seg" id="filterSeg">
+        <button data-f="all" class="on">All</button>
+        <button data-f="alerts">Alerts only</button>
       </div>
+      <button class="btn" id="pauseBtn"><span id="pauseIco">⏸</span><span id="pauseTxt">Pause</span></button>
+      <button class="btn" id="exportBtn">⬇ Export alerts (CSV)</button>
+      <span class="grow" id="tblInfo">showing last 120 flows</span>
+    </div>
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead><tr>
+          <th>#</th><th>Time</th><th>Dst Port</th><th>Proto</th>
+          <th>Prediction</th><th>Conf.</th><th>Severity</th><th>AE</th><th>Ground truth</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
     </div>
   </div>
 </main>
+
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="dh"><span class="t" id="drTitle">Flow</span>
+    <button class="x" id="drClose" aria-label="close">✕</button></div>
+  <div class="db" id="drBody"></div>
+</aside>
 
 <script>
 const $ = id => document.getElementById(id);
 const MAXROWS = 120;
 const ATTACK_WINDOW_MS = 8000;
-let lastAttackAt = 0;      // client clock — set when an alert row arrives
-let lastStats = null;      // last stats payload, so the timer can re-render
+const TL_MAX = 60;               // timeline buckets (~60s window)
+let lastAttackAt = 0;            // client clock — set when an alert row arrives
+let lastStats = null;            // last stats payload, so the timer can re-render
+let lastBatchAt = 0;            // client clock of last live batch (for quiet-tick)
+let paused = false;
+let filter = 'all';
+let aeThreshold = null;          // AE reconstruction-error threshold (from snapshot)
+const series = [];               // [{t, flows, alerts}] rolling throughput
+const evBuf  = [];               // recent event buffer (for CSV export)
+const seenIds = new Set();       // de-dupe events across init/batch/poll
 
-// escape untrusted CSV-derived text (Timestamp / Label) before innerHTML
 function esc(s){
   return String(s==null?'':s).replace(/[&<>"']/g,
     c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
 function fmtUptime(s){const m=Math.floor(s/60),ss=s%60;return m?`${m}m ${ss}s`:`${ss}s`;}
+function pct(x){return (x*100).toFixed(1)+'%';}
 
+const SERVICES={20:'FTP-data',21:'FTP',22:'SSH',23:'Telnet',25:'SMTP',53:'DNS',
+  80:'HTTP',110:'POP3',123:'NTP',143:'IMAP',161:'SNMP',389:'LDAP',443:'HTTPS',
+  445:'SMB',465:'SMTPS',587:'SMTP',993:'IMAPS',995:'POP3S',1433:'MSSQL',
+  1521:'Oracle',3306:'MySQL',3389:'RDP',5432:'Postgres',5900:'VNC',
+  6379:'Redis',8080:'HTTP-alt',8443:'HTTPS-alt',27017:'Mongo'};
+
+/* ── banner ─────────────────────────────────────────────────────────── */
 function setBanner(stats){
   if(!stats) return;
-  // recency measured on the CLIENT clock (no server/client skew dependency)
-  const recentAttack = lastAttackAt && (Date.now() - lastAttackAt) < ATTACK_WINDOW_MS;
+  const recentAttack = lastAttackAt && (Date.now()-lastAttackAt) < ATTACK_WINDOW_MS;
   const b=$('banner');
   if(recentAttack){
     b.className='banner alert';
@@ -150,69 +322,354 @@ function setBanner(stats){
     $('bannerIcon').textContent='🛡️';
     $('bannerBig').textContent='Monitoring — all clear';
     $('bannerSub').textContent = stats.total_alerts
-      ? `${stats.total_alerts} alert(s) so far · none in the last few seconds.`
+      ? `${stats.total_alerts.toLocaleString()} alert(s) so far · none in the last few seconds.`
       : 'No attacks detected yet.';
   }
 }
 
+/* ── stats / KPIs ───────────────────────────────────────────────────── */
 function renderStats(stats){
   lastStats = stats;
-  $('cFlows').textContent = stats.total_flows.toLocaleString();
+  $('cFlows').textContent  = stats.total_flows.toLocaleString();
   $('cAlerts').textContent = stats.total_alerts.toLocaleString();
-  $('cRate').textContent = (stats.alert_rate*100).toFixed(2)+'%';
+  $('cRate').textContent   = (stats.alert_rate*100).toFixed(2)+'%';
   if(stats.last_attack){
-    $('cLast').textContent = stats.last_attack.class;
-    $('cLast').className='v small';
+    $('cLast').textContent=stats.last_attack.class; $('cLast').className='v small';
+    $('cLastFoot').textContent=`severity ${stats.last_attack.severity} · flow #${stats.last_attack.id}`;
   }
   $('src').textContent = `source: ${stats.source} · uptime ${fmtUptime(stats.uptime_sec)}`;
 
-  // attacks-by-type bars
-  const entries=Object.entries(stats.by_class||{});
-  const box=$('byType');
-  if(!entries.length){ box.innerHTML='<div class="empty">No attacks yet.</div>'; }
-  else{
-    const max=Math.max(...entries.map(e=>e[1]));
-    box.innerHTML=entries.map(([k,v])=>`
-      <div class="bar"><div class="row"><span>${k}</span><span class="n">${v.toLocaleString()}</span></div>
-      <div class="track"><div class="fill" style="width:${(v/max*100).toFixed(1)}%"></div></div></div>`).join('');
-  }
+  if(stats.ae_threshold!=null) aeThreshold=stats.ae_threshold;
+  renderBars('byType', stats.by_class, 'No attacks yet.');
+  renderPorts(stats.top_ports);
+  renderTalkers(stats.top_talkers);
+  renderTypeRecall(stats.per_type_recall);
+  renderSeverity(stats.by_severity);
+  renderMetrics(stats.metrics);
   setBanner(stats);
 }
 
+/* ── generic magnitude bars ─────────────────────────────────────────── */
+function renderBars(boxId, obj, emptyMsg){
+  const entries=Object.entries(obj||{});
+  const box=$(boxId);
+  if(!entries.length){ box.innerHTML=`<div class="empty">${emptyMsg}</div>`; return; }
+  const max=Math.max(...entries.map(e=>e[1]));
+  box.innerHTML=entries.map(([k,v])=>`
+    <div class="bar"><div class="lab"><span class="name">${esc(k)}</span><span class="n">${v.toLocaleString()}</span></div>
+    <div class="track"><div class="fill" style="width:${(v/max*100).toFixed(1)}%"></div></div></div>`).join('');
+}
+
+function renderPorts(ports){
+  const box=$('portBox');
+  if(!ports || !ports.length){ box.innerHTML='<div class="empty">No targeted ports yet.</div>'; return; }
+  const max=Math.max(...ports.map(p=>p[1]));
+  box.innerHTML=ports.map(([port,cnt])=>{
+    const svc=SERVICES[port]?` <span class="svc">${SERVICES[port]}</span>`:'';
+    return `<div class="bar port"><div class="lab"><span class="name">:${port}${svc}</span><span class="n">${cnt.toLocaleString()}</span></div>
+      <div class="track"><div class="fill" style="width:${(cnt/max*100).toFixed(1)}%"></div></div></div>`;
+  }).join('');
+}
+
+function renderTalkers(talkers){
+  const box=$('talkerBox');
+  if(!talkers || !talkers.length){
+    box.innerHTML='<div class="empty">No source IPs yet.<br><span style="color:var(--muted2)">Src IP is only present in watch / lab captures — the 2018 replay CSVs carry Dst Port only.</span></div>';
+    return;
+  }
+  const max=Math.max(...talkers.map(t=>t[1]));
+  box.innerHTML=talkers.map(([ip,cnt])=>`
+    <div class="bar port"><div class="lab"><span class="name">${esc(ip)}</span><span class="n">${cnt.toLocaleString()}</span></div>
+    <div class="track"><div class="fill" style="width:${(cnt/max*100).toFixed(1)}%"></div></div></div>`).join('');
+}
+
+function renderTypeRecall(rows){
+  const box=$('typeRecallBox');
+  if(!rows || !rows.length){
+    box.innerHTML='<div class="empty">No labelled attack flows yet.<br><span style="color:var(--muted2)">Run a labelled replay (e.g. the held-out lab file) to populate this.</span></div>';
+    return;
+  }
+  box.innerHTML=rows.map(([t,caught,total])=>{
+    const r = total ? caught/total : 0;
+    const col = r>=0.9?'var(--green)':(r>=0.6?'var(--amber)':'var(--red)');
+    const small = total<20 ? ` <span class="lown" title="too few samples to trust">n=${total}</span>` : '';
+    return `<div class="bar"><div class="lab"><span class="name">${esc(t)}${small}</span>
+      <span class="n">${(r*100).toFixed(total<20?0:1)}% · ${caught}/${total}</span></div>
+      <div class="track"><div class="fill" style="width:${(r*100).toFixed(1)}%;background:${col}"></div></div></div>`;
+  }).join('');
+}
+
+/* ── severity donut ─────────────────────────────────────────────────── */
+const SEV_ORDER=['CRITICAL','HIGH','MEDIUM','LOW'];
+const SEV_COL={CRITICAL:'var(--crit)',HIGH:'var(--high)',MEDIUM:'var(--med)',LOW:'var(--low)'};
+function renderSeverity(bySev){
+  const box=$('sevBox');
+  const items=SEV_ORDER.map(s=>[s,(bySev&&bySev[s])||0]).filter(x=>x[1]>0);
+  const total=items.reduce((a,x)=>a+x[1],0);
+  if(!total){ box.innerHTML='<div class="empty">No alerts yet.</div>'; return; }
+  const R=48, C=2*Math.PI*R, cx=60, cy=60, W=16, GAP=items.length>1?2:0;
+  let off=0;
+  const arcs=items.map(([s,v])=>{
+    const frac=v/total, len=Math.max(0,frac*C-GAP);
+    const seg=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${SEV_COL[s]}"
+      stroke-width="${W}" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}"
+      transform="rotate(-90 ${cx} ${cy})"/>`;
+    off+=frac*C; return seg;
+  }).join('');
+  const legend=items.map(([s,v])=>`<div class="it">
+      <span class="sw" style="background:${SEV_COL[s]}"></span>
+      <span class="nm">${s.charAt(0)+s.slice(1).toLowerCase()}</span>
+      <span class="ct">${v.toLocaleString()}</span>
+      <span class="pc">${(v/total*100).toFixed(0)}%</span></div>`).join('');
+  box.innerHTML=`<div class="donut-wrap">
+    <div class="donut" style="width:120px;height:120px">
+      <svg viewBox="0 0 120 120" width="120" height="120">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="var(--panel2)" stroke-width="16"/>${arcs}</svg>
+      <div class="ctr"><div class="num">${total.toLocaleString()}</div><div class="cap">alerts</div></div>
+    </div>
+    <div class="sev-legend">${legend}</div></div>`;
+}
+
+/* ── detection quality ──────────────────────────────────────────────── */
+function renderMetrics(m){
+  const box=$('dq');
+  if(!m || !m.labelled){
+    $('dqTag').textContent='replay only';
+    box.innerHTML=`<div class="metric-empty">No ground-truth labels in this stream.<br>
+      Run in <b>replay</b> mode (CSV with a <code>Label</code> column) to see live
+      accuracy, precision, recall &amp; F1 as flows are scored.</div>`;
+    return;
+  }
+  $('dqTag').textContent=`over ${m.labelled.toLocaleString()} labelled flows`;
+  const {tp,tn,fp,fn}=m, tot=tp+tn+fp+fn;
+  const acc=tot?(tp+tn)/tot:0;
+  const prec=(tp+fp)?tp/(tp+fp):0;
+  const rec=(tp+fn)?tp/(tp+fn):0;
+  const f1=(prec+rec)?2*prec*rec/(prec+rec):0;
+  const tile=(k,v,cls='')=>`<div class="m"><div class="k">${k}</div><div class="v ${cls}">${pct(v)}</div></div>`;
+  box.innerHTML=`
+    <div class="mq">
+      ${tile('Accuracy',acc,'ok')}${tile('F1 score',f1)}
+      ${tile('Precision',prec)}${tile('Recall',rec)}
+    </div>
+    <div class="cm">
+      <div class="rl"></div><div class="h">pred: attack</div><div class="h">pred: benign</div>
+      <div class="rl">actual attack</div><div class="tp">TP ${tp.toLocaleString()}</div><div class="fn">FN ${fn.toLocaleString()}</div>
+      <div class="rl">actual benign</div><div class="fp">FP ${fp.toLocaleString()}</div><div class="tn">TN ${tn.toLocaleString()}</div>
+    </div>`;
+}
+
+/* ── throughput timeline (SVG) ──────────────────────────────────────── */
+function pushPoint(flows, alerts){
+  series.push({t:Date.now(), flows, alerts});
+  while(series.length>TL_MAX) series.shift();
+  drawTimeline();
+}
+function drawTimeline(){
+  const W=600,H=170,pl=34,pr=8,pt=12,pb=20, pw=W-pl-pr, ph=H-pt-pb;
+  const svg=$('tl');
+  if(!series.length){ svg.innerHTML=''; return; }
+  const n=series.length;
+  const maxF=Math.max(1,...series.map(d=>d.flows));
+  const x=i=> n===1 ? pl+pw/2 : pl + i/(n-1)*pw;
+  const y=v=> pt + ph - (v/maxF)*ph;
+  window._tlX = series.map((_,i)=>x(i));   // for hover hit-testing
+  // gridlines + y labels (0, mid, max)
+  let grid='';
+  [0,0.5,1].forEach(f=>{ const val=Math.round(maxF*f), yy=y(val);
+    grid+=`<line x1="${pl}" y1="${yy}" x2="${W-pr}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`;
+    grid+=`<text x="${pl-6}" y="${yy+3}" fill="var(--muted2)" font-size="9" text-anchor="end">${val}</text>`;
+  });
+  // flows area
+  const pts=series.map((d,i)=>`${x(i).toFixed(1)},${y(d.flows).toFixed(1)}`).join(' ');
+  const area=`M ${x(0).toFixed(1)},${(pt+ph)} L ${pts.replace(/ /g,' L ')} L ${x(n-1).toFixed(1)},${(pt+ph)} Z`;
+  const flowsLine=`M ${pts.replace(/ /g,' L ')}`;
+  // alerts line (same y-scale; alerts ⊆ flows)
+  const aPts=series.map((d,i)=>`${x(i).toFixed(1)},${y(d.alerts).toFixed(1)}`).join(' ');
+  const alertsLine=`M ${aPts.replace(/ /g,' L ')}`;
+  const aDots=series.map((d,i)=> d.alerts>0
+    ? `<circle cx="${x(i).toFixed(1)}" cy="${y(d.alerts).toFixed(1)}" r="2.6" fill="var(--red)"/>`:'').join('');
+  svg.innerHTML=`
+    <defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--blue)" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="var(--blue)" stop-opacity="0.02"/></linearGradient></defs>
+    ${grid}
+    <path d="${area}" fill="url(#fg)"/>
+    <path d="${flowsLine}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="${alertsLine}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" opacity="0.95"/>
+    ${aDots}
+    <line id="tlCross" x1="0" y1="${pt}" x2="0" y2="${pt+ph}" stroke="var(--muted)" stroke-width="1" opacity="0"/>`;
+}
+// hover crosshair + tooltip
+(function(){
+  const wrap=$('tlWrap'), tip=$('tlTip');
+  wrap.addEventListener('mousemove', ev=>{
+    if(!series.length || !window._tlX) return;
+    const svg=$('tl'), r=svg.getBoundingClientRect();
+    const vx=(ev.clientX-r.left)/r.width*600;      // client px → viewBox units
+    let bi=0,bd=1e9; window._tlX.forEach((px,i)=>{const d=Math.abs(px-vx); if(d<bd){bd=d;bi=i;}});
+    const d=series[bi]; const cross=$('tlCross');
+    if(cross){ const cx=window._tlX[bi]; cross.setAttribute('x1',cx); cross.setAttribute('x2',cx); cross.setAttribute('opacity','0.6'); }
+    const ago=Math.round((Date.now()-d.t)/1000);
+    tip.innerHTML=`<b>${d.flows}</b> flows/s${d.alerts?` · <b style="color:var(--red)">${d.alerts}</b> alerts`:''}<br><span style="color:var(--muted2)">${ago===0?'now':ago+'s ago'}</span>`;
+    const px=window._tlX[bi]/600*r.width;
+    tip.style.left=Math.min(r.width-120,Math.max(0,px+8))+'px';
+    tip.style.top='6px'; tip.style.opacity='1';
+  });
+  wrap.addEventListener('mouseleave', ()=>{ tip.style.opacity='0'; const c=$('tlCross'); if(c)c.setAttribute('opacity','0'); });
+})();
+
+/* ── live table ─────────────────────────────────────────────────────── */
+function rowHtml(e){
+  const clsName = e.predicted_class==='Benign' ? 'cls benign':'cls';
+  const predAtk = e.predicted_class!=='Benign';
+  const trueAtk = e.true_label!=null && e.true_label!=='Benign';
+  const truth = e.true_label==null ? '<span class="muted">—</span>'
+    : (predAtk===trueAtk ? `<span class="ok">${esc(e.true_label)} ✓</span>`
+                         : `<span class="bad">${esc(e.true_label)} ✗</span>`);
+  const conf = (e.lab_attack && e.lab_attack_proba!=null) ? e.lab_attack_proba : e.confidence;
+  const sev = /^(NONE|LOW|MEDIUM|HIGH|CRITICAL)$/.test(e.severity) ? e.severity : 'NONE';
+  return `
+    <td class="muted">${e.id}</td>
+    <td class="muted">${esc(e.ts||'').replace(/\s+/,'&nbsp;')||'—'}</td>
+    <td>${e.dst_port??'—'}</td>
+    <td class="muted">${esc(e.protocol)}</td>
+    <td class="${clsName}">${esc(e.predicted_class)}</td>
+    <td>${(conf*100).toFixed(1)}%</td>
+    <td><span class="pill ${sev}">${sev}</span></td>
+    <td>${e.is_anomaly?'⚠︎':'<span class="muted">·</span>'}</td>
+    <td>${truth}</td>`;
+}
 function addRows(events, live=true){
+  // buffer for export (all events, de-duped)
+  for(const e of events){ if(!seenIds.has(e.id)){ seenIds.add(e.id); evBuf.push(e); } }
+  while(evBuf.length>2000) evBuf.shift();
+  if(live){
+    // timeline: one bucket per live batch
+    pushPoint(events.length, events.filter(e=>e.alert).length);
+    lastBatchAt=Date.now();
+    if(events.some(e=>e.alert)) lastAttackAt=Date.now();
+  }
+  if(paused) return;             // freeze table only; stats keep flowing
   const tb=$('rows');
   for(const e of events){
     const tr=document.createElement('tr');
-    if(e.alert){ tr.className='attack'; if(live) lastAttackAt=Date.now(); }
-    const clsName = e.predicted_class==='Benign' ? 'cls benign':'cls';
-    // Correctness is attack-vs-benign agreement, not exact class-string match:
-    // the lab detector is binary, so "Attack (lab-detected)" vs a specific
-    // ground-truth attack name (e.g. SYN-Flood) is still a CORRECT detection.
-    const predAtk = e.predicted_class!=='Benign';
-    const trueAtk = e.true_label!=null && e.true_label!=='Benign';
-    const truth = e.true_label==null ? '<span class="muted">—</span>'
-      : (predAtk===trueAtk
-          ? `<span class="ok">${esc(e.true_label)} ✓</span>`
-          : `<span class="bad">${esc(e.true_label)} ✗</span>`);
-    // For a lab-detected attack, show the lab detector's attack probability
-    // rather than the 2018 ensemble's (misleading) confidence in "Benign".
-    const conf = (e.lab_attack && e.lab_attack_proba!=null) ? e.lab_attack_proba : e.confidence;
-    const sev = /^(NONE|LOW|MEDIUM|HIGH|CRITICAL)$/.test(e.severity) ? e.severity : 'NONE';
-    tr.innerHTML=`
-      <td class="muted">${e.id}</td>
-      <td class="muted">${esc(e.ts||'').replace(/\s+/,'&nbsp;')||'—'}</td>
-      <td>${e.dst_port??'—'}</td>
-      <td class="muted">${esc(e.protocol)}</td>
-      <td class="${clsName}">${esc(e.predicted_class)}</td>
-      <td>${(conf*100).toFixed(1)}%</td>
-      <td><span class="pill ${sev}">${sev}</span></td>
-      <td>${e.is_anomaly?'⚠︎':'<span class="muted">·</span>'}</td>
-      <td>${truth}</td>`;
+    tr.className = e.alert ? 'attack' : 'benign-row';
+    tr.dataset.id = e.id;
+    tr.innerHTML=rowHtml(e);
     tb.prepend(tr);
   }
   while(tb.children.length>MAXROWS) tb.removeChild(tb.lastChild);
 }
 
+/* ── toolbar ────────────────────────────────────────────────────────── */
+$('filterSeg').addEventListener('click', ev=>{
+  const b=ev.target.closest('button'); if(!b) return;
+  filter=b.dataset.f;
+  [...$('filterSeg').children].forEach(x=>x.classList.toggle('on', x===b));
+  $('tbl').classList.toggle('hide-benign', filter==='alerts');
+});
+$('pauseBtn').addEventListener('click', ()=>{
+  paused=!paused;
+  $('pauseBtn').classList.toggle('paused', paused);
+  $('pauseIco').textContent = paused?'▶':'⏸';
+  $('pauseTxt').textContent = paused?'Resume':'Pause';
+  $('tblInfo').textContent = paused?'paused — table frozen':'showing last 120 flows';
+});
+$('exportBtn').addEventListener('click', ()=>{
+  const alerts=evBuf.filter(e=>e.alert);
+  if(!alerts.length){ $('tblInfo').textContent='no alerts to export yet'; return; }
+  const cols=['id','ts','dst_port','protocol','predicted_class','confidence','severity','is_anomaly','lab_attack','true_label'];
+  const csv=[cols.join(',')].concat(alerts.map(e=>cols.map(c=>{
+    let v=e[c]; if(v==null)v=''; v=String(v);
+    return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;
+  }).join(','))).join('\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a=document.createElement('a');
+  a.href=url; a.download=`ml-ids-alerts-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+});
+
+/* ── per-flow detail drawer (model votes) ───────────────────────────── */
+function badge(cls){
+  if(cls==null||cls==='') return '<span class="bdg na">n/a</span>';
+  return `<span class="bdg ${cls!=='Benign'?'atk':'ben'}">${esc(cls)}</span>`;
+}
+function aeVote(e){
+  if(e.recon_mse==null) return '<span class="bdg na">not scored</span>';
+  const anom=e.is_anomaly;
+  const badgeEl=`<span class="bdg ${anom?'atk':'ben'}">${anom?'anomalous':'normal'}</span>`;
+  if(aeThreshold){
+    const fill=Math.min(100, e.recon_mse/aeThreshold*50);   // threshold sits at 50%
+    return `${badgeEl}<div class="aebar"><div class="tk">
+      <div class="fl" style="width:${fill.toFixed(1)}%;background:${anom?'var(--red)':'var(--blue)'}"></div>
+      <div class="thr" style="left:50%"></div></div>
+      <div class="cap">MSE ${e.recon_mse} · threshold ${aeThreshold.toFixed(6)}</div></div>`;
+  }
+  return `${badgeEl}<span class="val" style="color:var(--muted)">MSE ${e.recon_mse}</span>`;
+}
+function fmtIp(ip,port){
+  if(ip==null) return '<span class="muted">—</span>';
+  return esc(ip)+(port!=null?`<span style="color:var(--muted2)">:${port}</span>`:'');
+}
+function openDrawer(id){
+  const e=evBuf.find(x=>String(x.id)===String(id));
+  if(!e) return;
+  $('drTitle').textContent=`Flow #${e.id}`;
+  const sev=/^(NONE|LOW|MEDIUM|HIGH|CRITICAL)$/.test(e.severity)?e.severity:'NONE';
+  const conf=(e.lab_attack&&e.lab_attack_proba!=null)?e.lab_attack_proba:e.confidence;
+  const predAtk=e.predicted_class!=='Benign';
+  const trueTxt = e.true_label==null ? '<span class="muted">—</span>'
+    : ((predAtk===(e.true_label!=='Benign'))
+        ? `<span class="ok">${esc(e.true_label)} ✓</span>`
+        : `<span class="bad">${esc(e.true_label)} ✗</span>`);
+  const labVote = e.lab_attack_proba==null
+    ? '<span class="bdg na">not scored</span>'
+    : `<span class="bdg ${e.lab_attack?'atk':'ben'}">${e.lab_attack?'attack':'benign'}</span>`
+      +`<span class="val" style="color:var(--muted)">p=${(e.lab_attack_proba*100).toFixed(1)}%</span>`;
+  $('drBody').innerHTML=`
+    <div class="dsec">
+      <div class="verdict ${e.alert?'attack':''}">
+        <div class="vc ${predAtk?'':'ok'}">${esc(e.predicted_class)}</div>
+        <div class="vm"><span class="pill ${sev}">${sev}</span>
+          <span>${e.alert?'🚨 alert raised':'✓ no alert'}</span>
+          <span>· confidence ${(conf*100).toFixed(1)}%</span></div>
+      </div>
+    </div>
+    <div class="dsec">
+      <div class="st">Model votes</div>
+      <div class="vote"><span class="m">XGBoost</span>${badge(e.xgb_class)}</div>
+      <div class="vote"><span class="m">MLP</span>${badge(e.mlp_class)}</div>
+      <div class="vote"><span class="m">Autoencoder</span>${aeVote(e)}</div>
+      <div class="vote"><span class="m">Lab detector</span>${labVote}</div>
+    </div>
+    <div class="dsec">
+      <div class="st">Flow</div>
+      <div class="kv">
+        <span class="k">Source</span><span class="v">${fmtIp(e.src_ip,e.src_port)}</span>
+        <span class="k">Destination</span><span class="v">${fmtIp(e.dst_ip,e.dst_port)}</span>
+        <span class="k">Protocol</span><span class="v">${esc(e.protocol)}</span>
+        <span class="k">Timestamp</span><span class="v">${esc(e.ts||'—')}</span>
+        <span class="k">Ground truth</span><span class="v">${trueTxt}</span>
+      </div>
+    </div>`;
+  $('backdrop').classList.add('open');
+  $('drawer').classList.add('open');
+  $('drawer').setAttribute('aria-hidden','false');
+}
+function closeDrawer(){
+  $('backdrop').classList.remove('open');
+  $('drawer').classList.remove('open');
+  $('drawer').setAttribute('aria-hidden','true');
+}
+$('rows').addEventListener('click', ev=>{
+  const tr=ev.target.closest('tr'); if(tr&&tr.dataset.id) openDrawer(tr.dataset.id);
+});
+$('drClose').addEventListener('click', closeDrawer);
+$('backdrop').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', ev=>{ if(ev.key==='Escape') closeDrawer(); });
+
+/* ── transport (WS with polling fallback) ───────────────────────────── */
 let usingPoll=false, lastPollId=0;
 function startPolling(){
   if(usingPoll) return; usingPoll=true;
@@ -240,14 +697,20 @@ function connect(){
     if(m.type==='init'){ if(m.recent) addRows(m.recent, false); renderStats(m.stats); }
     else if(m.type==='batch'){ addRows(m.events); renderStats(m.stats); }
   };
-  // WebSockets are often stripped by web proxies (OnDemand etc.); if the socket
-  // hasn't opened within 3s, fall back to HTTP polling of /api/state.
   setTimeout(()=>{ if(!opened) startPolling(); }, 3000);
 }
 connect();
-// re-evaluate the banner every second so it fades red -> green during quiet
-// periods even when no new flows arrive (important in watch mode).
-setInterval(()=>setBanner(lastStats), 1000);
+
+/* per-second housekeeping: fade banner during quiet periods, keep the
+   timeline scrolling (push a zero bucket when no batch arrived), refresh
+   the live throughput KPI. */
+setInterval(()=>{
+  setBanner(lastStats);
+  if(lastBatchAt && (Date.now()-lastBatchAt)>1300) pushPoint(0,0);
+  const recent=series.slice(-5);
+  const fps=recent.length ? recent.reduce((a,d)=>a+d.flows,0)/recent.length : 0;
+  $('cRateFps').innerHTML=`${fps.toFixed(fps<10?1:0)}<span style="font-size:14px;font-weight:500;color:var(--muted)"> fl/s</span>`;
+}, 1000);
 </script>
 </body>
 </html>

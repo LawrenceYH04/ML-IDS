@@ -9,6 +9,26 @@ Scoring uses **XGBoost (classifier) + Autoencoder (anomaly detector)** — the
 `--skip-rf` path from `notebooks/inference.py`. Random Forest is intentionally
 not loaded (it needs ~11 GB and ~6 min/run — unusable for live scoring).
 
+The dashboard shows, alongside the live flow table:
+
+- **Live throughput** — a rolling flows/sec + alerts/sec timeline (hover for values).
+- **Detection quality** — running accuracy / precision / recall / F1 and a
+  confusion matrix, computed over labelled flows (replay mode only). Detection is
+  scored attack-vs-benign (the lab detector is binary), matching the table's ✓/✗.
+- **Severity mix** — donut of alert severities; **Top targeted ports** — most-hit
+  destination ports (well-known services annotated); **Attacks by type** — per-class counts.
+- **Top talkers** — busiest source IPs (watch/lab captures only; the 2018 replay CSVs
+  carry `Dst Port` but no `Src IP`, so this stays empty there).
+- **Recall by attack type** — per-class detection recall (caught / total). Bars are
+  green/amber/red by recall and flag `n<20` classes as statistically thin.
+- **Click any flow** to open a detail drawer with the per-model votes (XGBoost, MLP,
+  Autoencoder MSE vs. threshold, lab detector) behind the final decision, plus the
+  full source→destination / protocol / ground-truth breakdown.
+- Table controls: filter to **alerts only**, **pause** the feed, and **export alerts to CSV**.
+
+All aggregates are computed server-side in the `Hub` (see `snapshot()`); the
+timeline is client-side from live batches.
+
 ```
 web/
   app.py               FastAPI server (replay + folder-watch, WebSocket)
@@ -132,7 +152,19 @@ SKIP_LAB=1 $PY -m uvicorn app:app --host 0.0.0.0 --port 8000
 
 # Lab demo — SYN-Flood/PortScan/DoS via the scale-invariant lab detector
 REPLAY_FILE=$HOME/ML-IDS/data/live/lab_demo_replay.csv $PY -m uvicorn app:app --host 0.0.0.0 --port 8000
+
+# Lab demo, HONEST — held-out 30% test split the lab XGB never trained on
+REPLAY_FILE=$HOME/ML-IDS/data/live/lab_demo_replay_holdout.csv $PY -m uvicorn app:app --host 0.0.0.0 --port 8000
 ```
+
+> **Which lab replay to use.** `lab_demo_replay.csv` is sampled from the *same*
+> captures the lab XGBoost trained on (`build/retrain_lab_classifier.py`), so its
+> Detection-quality panel reports a leaked ~100% — fine as a "the pipeline runs"
+> demo, misleading as a result. `lab_demo_replay_holdout.csv` contains **only** the
+> 30% test rows the model never saw (built by `build/make_lab_holdout_replay.py`,
+> which reproduces the trainer's exact `random_state=42` stratified split). Use it
+> for any number you quote, and read the **Recall by attack type** panel — the rare
+> classes (FTP n=6, SSH n=3, HTTP-Flood n=1) are too thin to trust even here.
 Stop one (Ctrl-C) before starting the other; **hard-refresh** the browser between
 runs (Safari `Cmd+Option+R`, Chrome `Cmd+Shift+R`) — the page keeps client-side state.
 
