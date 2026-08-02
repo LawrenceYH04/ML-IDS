@@ -1,9 +1,10 @@
 # Data & Model Artifacts
 
-This repository contains **all code, notebooks, reports, and result figures**, but
-**not** the multi-gigabyte datasets or the largest trained models — GitHub caps files
-at 100 MB and these total ~13 GB. This page explains what is excluded and how to
-regenerate it.
+This repository contains **all code, notebooks, and result figures**, but **not** the
+multi-gigabyte datasets or the largest trained models — GitHub caps files at 100 MB and
+these total ~13 GB. This page explains what is excluded and how to regenerate it.
+
+(The written report and logbook are submitted separately and are not kept here.)
 
 ## What's excluded (see `.gitignore`)
 
@@ -50,6 +51,10 @@ Run the notebooks in order — each writes the artifacts the next one consumes:
 4. `notebooks/model_training.ipynb` — trains RF / XGBoost / MLP → `models/`
 5. `notebooks/evaluation.ipynb` — metrics, confusion matrices → `results/`
 6. `notebooks/explainability.ipynb` — SHAP attribution figures
+
+Once step 5 has written `results/y_pred_*.npy`, `python verify_results.py` re-derives
+the headline metric tables from those saved predictions, and `build/*.py` regenerates
+the figures under `results/`.
 
 ## Environment
 
